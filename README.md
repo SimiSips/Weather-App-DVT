@@ -45,6 +45,9 @@ app/src/main/java/com/simphiweradebe/weatherappdvt/
 ├── domain/
 │   └── repository/          # Repository interfaces
 │       └── WeatherRepository.kt
+├── navigation/              # Navigation setup
+│   ├── NavGraph.kt
+│   └── Screen.kt
 ├── presentation/
 │   └── screens/
 │       ├── weather/         # Main weather screen
@@ -52,13 +55,18 @@ app/src/main/java/com/simphiweradebe/weatherappdvt/
 │       │   ├── WeatherViewModel.kt
 │       │   ├── WeatherState.kt
 │       │   └── components/
+│       ├── forecast/        # Forecast detail screen
+│       │   ├── ForecastDetailScreen.kt
+│       │   └── components/
 │       └── search/          # Location search
 │           ├── SearchDialog.kt
 │           ├── SearchViewModel.kt
 │           └── SearchState.kt
 ├── utils/                   # Utility classes
 │   ├── Constants.kt
+│   ├── LocationManager.kt
 │   ├── Resource.kt
+│   ├── WeatherBackgroundMapper.kt
 │   └── WeatherIconMapper.kt
 └── WeatherApplication.kt    # Application class
 ```
@@ -88,8 +96,14 @@ app/src/main/java/com/simphiweradebe/weatherappdvt/
 
 ### Jetpack Components
 - **ViewModel**: UI state management and lifecycle awareness
-- **Navigation Compose**: Screen navigation (if expanded)
+- **Navigation Compose**: Screen navigation between weather and forecast detail screens
 - **Hilt Navigation Compose**: ViewModel integration with Compose
+
+### Location Services
+- **Google Play Services Location (21.3.0)**: GPS and location services
+  - FusedLocationProviderClient for accurate location
+  - Runtime permission handling
+  - Used for: Current location weather detection
 
 ### Coroutines & Flow
 - **Kotlin Coroutines**: Asynchronous programming
@@ -100,18 +114,53 @@ app/src/main/java/com/simphiweradebe/weatherappdvt/
   - StateFlow for state management
   - Used for: Repository to ViewModel data flow
 
+### Testing Dependencies
+- **MockK (1.13.8)**: Mocking framework for Kotlin
+  - Provides relaxed mocks and DSL for test setup
+  - Used for: Unit testing ViewModels and Repositories
+
+- **Turbine (1.0.0)**: Flow testing library
+  - Simplifies testing of Kotlin Flows
+  - Used for: Testing StateFlow emissions
+
+- **Coroutines Test (1.8.1)**: Testing utilities for coroutines
+  - Test dispatchers and runTest scope
+  - Used for: Testing suspend functions
+
+### Code Quality Tools
+- **Detekt (1.23.6)**: Static code analysis
+  - Enforces code style and complexity rules
+  - Custom configuration in `app/config/detekt.yml`
+
+- **JaCoCo**: Code coverage reporting
+  - XML and HTML coverage reports
+  - Excludes generated files and data models
+
 ## Features
 
+### Weather Data
 - Real-time weather data for any location
+- Current location detection using GPS with runtime permissions
 - Current weather conditions with detailed metrics
 - Hourly weather forecast (up to 48 hours)
 - Daily weather forecast (up to 8 days)
 - Weather alerts and warnings
+
+### User Interface
+- Dynamic weather backgrounds (Sunny, Cloudy, Rainy, Forest)
+- Detailed forecast screen with smooth temperature graph (Bezier curves)
 - Location search with autocomplete
 - Custom weather icons for different conditions
 - Gradient UI design with modern Material 3 components
+- Navigation between weather and forecast detail screens
+
+### Technical Features
 - Error handling with retry functionality
 - Loading states and empty states
+- Comprehensive unit tests (16 tests covering ViewModels and Repository)
+- CI/CD pipeline with GitHub Actions
+- Static code analysis with Detekt
+- Code coverage reporting with JaCoCo
 
 ## Build Instructions
 
@@ -152,12 +201,27 @@ cd WeatherAppDVT
 # Release build
 ./gradlew assembleRelease
 
-# Run tests
-./gradlew test
+# Run unit tests
+./gradlew testDebugUnitTest
+
+# Run static analysis
+./gradlew detekt
+
+# Generate code coverage report
+./gradlew jacocoTestReport
+
+# Run all checks (build, test, lint, detekt)
+./gradlew check
 
 # Clean build
 ./gradlew clean build
 ```
+
+### Test Reports
+After running tests and coverage:
+- **Test results**: `app/build/reports/tests/testDebugUnitTest/index.html`
+- **Coverage report**: `app/build/reports/jacoco/jacocoTestReport/html/index.html`
+- **Detekt report**: `app/build/reports/detekt/detekt.html`
 
 ## API Configuration
 
@@ -199,12 +263,20 @@ This app uses the **OpenWeatherMap One Call API 3.0**, which requires a paid sub
 - Reusable weather cards and forecast items
 - All UI built with Jetpack Compose (no XML layouts)
 
-### Code Quality
-- Kotlin DSL for Gradle configuration
-- Version catalog for dependency management (`libs.versions.toml`)
-- Previews for all composable components
-- Proper error handling at all layers
-- KAPT error type correction enabled
+### Code Quality & Testing
+- **CI/CD Pipeline**: GitHub Actions workflow for automated builds and tests
+- **Unit Testing**: 16 comprehensive tests covering ViewModels and Repository
+  - WeatherViewModelTest: 5 tests (loading, success, error, location, retry)
+  - WeatherRepositoryImplTest: 5 tests (API flows and error handling)
+  - SearchViewModelTest: 5 tests (search functionality)
+- **Static Analysis**: Detekt with custom rules for code quality
+  - Complexity thresholds: LongMethod (60), ComplexMethod (15)
+  - Max line length: 120 characters
+- **Code Coverage**: JaCoCo reports with XML and HTML output
+- **Dependency Management**: Version catalog (`libs.versions.toml`)
+- **Build Configuration**: Kotlin DSL for Gradle
+- **Error Handling**: Proper handling at all architectural layers
+- **Type Safety**: KAPT error type correction enabled
 
 ### Network Security
 - All API endpoints use HTTPS
@@ -213,14 +285,41 @@ This app uses the **OpenWeatherMap One Call API 3.0**, which requires a paid sub
 
 ## Screenshots
 
-The app features a modern gradient design with:
-- Custom header with menu and notification icons
+### Main Weather Screen
+- Custom header with search and current location icons
 - Large centered weather icon display
 - Prominent temperature display (96sp)
+- City name display showing current location
 - Wind and humidity metrics section
 - Horizontal scrolling hourly forecast
 - Dark card design for weather details
-- Location search dialog with results list
+- "Next 7 Days" button for forecast details
+- Location search dialog with autocomplete results
+
+### Forecast Detail Screen
+- Dynamic weather backgrounds based on conditions (Sunny, Cloudy, Rainy, Forest)
+- Back navigation to main screen
+- Large weather icon with current temperature
+- Smooth temperature graph with Bezier curves (8-hour forecast)
+- "Feels Like" and "Humidity" metric cards
+- Wind speed and direction card
+- Humidity percentage card with icon
+- Weather alerts section (when available)
+- Weekly forecast list (7 days) with min/max temperatures
+
+## CI/CD Pipeline
+
+The project includes a GitHub Actions workflow (`.github/workflows/android-ci.yml`) that automatically:
+
+1. **Code Quality Check**: Runs Detekt static analysis
+2. **Build**: Compiles the project for both debug and release variants
+3. **Test**: Executes all unit tests
+4. **Coverage**: Generates JaCoCo code coverage reports
+5. **Artifacts**: Uploads test results and coverage reports
+
+The pipeline runs on:
+- Push to `main` branch
+- Pull requests to `main` branch
 
 ## License
 
