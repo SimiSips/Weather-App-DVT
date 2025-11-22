@@ -23,13 +23,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.simphiweradebe.weatherappdvt.R
-import com.simphiweradebe.weatherappdvt.presentation.components.WeatherCard
-import com.simphiweradebe.weatherappdvt.presentation.components.WeatherDetailItem
 import com.simphiweradebe.weatherappdvt.utils.WeatherIconMapper
 import java.text.SimpleDateFormat
 import java.util.*
@@ -61,13 +60,38 @@ fun WeatherScreen(
                 )
             }
             state.error.isNotBlank() -> {
-                Text(
-                    text = state.error,
-                    color = Color.White,
+                Column(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .padding(16.dp)
-                )
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Oops!",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = state.error,
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 16.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Button(
+                        onClick = { viewModel.retry() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White.copy(alpha = 0.2f)
+                        )
+                    ) {
+                        Text(
+                            text = "Retry",
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
             }
             state.weather != null -> {
                 val weather = state.weather!!

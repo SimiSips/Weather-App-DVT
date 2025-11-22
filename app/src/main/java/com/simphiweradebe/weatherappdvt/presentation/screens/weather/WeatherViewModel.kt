@@ -19,12 +19,18 @@ class WeatherViewModel @Inject constructor(
     private val _state = MutableStateFlow(WeatherState())
     val state: StateFlow<WeatherState> = _state
 
+    private var lastLat: Double = -26.2041
+    private var lastLon: Double = 28.0473
+
     init {
         // Default location - Johannesburg
-        getWeather(-26.2041, 28.0473)
+        getWeather(lastLat, lastLon)
     }
 
     fun getWeather(lat: Double, lon: Double) {
+        lastLat = lat
+        lastLon = lon
+
         repository.getWeatherData(lat, lon).onEach { result ->
             when (result) {
                 is Resource.Success -> {
@@ -40,5 +46,9 @@ class WeatherViewModel @Inject constructor(
                 }
             }
         }.launchIn(viewModelScope)
+    }
+
+    fun retry() {
+        getWeather(lastLat, lastLon)
     }
 }
