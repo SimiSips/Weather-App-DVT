@@ -1,5 +1,8 @@
 package com.simphiweradebe.weatherappdvt.presentation.screens.weather
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -39,6 +42,29 @@ fun WeatherScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var showSearchDialog by remember { mutableStateOf(false) }
+
+    // Location permission launcher
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+        if (fineLocationGranted || coarseLocationGranted) {
+            // Permission granted, get current location weather
+            viewModel.getCurrentLocationWeather()
+        }
+    }
+
+    // Request location permission on first launch
+    LaunchedEffect(Unit) {
+        locationPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
 
     if (showSearchDialog) {
         com.simphiweradebe.weatherappdvt.presentation.screens.search.SearchDialog(

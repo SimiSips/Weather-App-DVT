@@ -66,6 +66,10 @@ dependencies {
     // Navigation
     implementation(libs.androidx.navigation.compose)
 
+    // Location
+    implementation(libs.play.services.location)
+    implementation(libs.kotlinx.coroutines.play.services)
+
     // Retrofit & Networking
     implementation(libs.retrofit)
     implementation(libs.retrofit.serialization)
