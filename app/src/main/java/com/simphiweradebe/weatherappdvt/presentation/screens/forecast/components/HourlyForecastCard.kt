@@ -11,8 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -72,7 +71,7 @@ fun HourlyForecastCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(140.dp)
             ) {
                 // Draw the temperature curves
                 Canvas(
@@ -80,88 +79,108 @@ fun HourlyForecastCard(
                 ) {
                     val width = size.width
                     val height = size.height
-                    val points = hourlyData.take(5)
-                    val spacing = width / (points.size - 1)
+                    val points = hourlyData.take(8)
+                    if (points.size < 2) return@Canvas
 
-                    // High temperature line (top wavy line - blue)
-                    val highTempPath = Path()
-                    points.forEachIndexed { index, hourly ->
+                    val spacing = width / (points.size - 1).coerceAtLeast(1)
+                    val padding = 40f
+
+                    val curvePath = Path()
+                    val fillPath = Path()
+
+                    val curvePoints = points.mapIndexed { index, hourly ->
                         val x = index * spacing
-                        val normalizedTemp = ((hourly.temp ?: 0.0) - minTemp) / (maxTemp - minTemp)
-                        val y = height * 0.3f - (normalizedTemp.toFloat() * height * 0.2f)
-
-                        if (index == 0) {
-                            highTempPath.moveTo(x, y)
+                        val temp = hourly.temp ?: minTemp
+                        val normalizedTemp = if (maxTemp > minTemp) {
+                            ((temp - minTemp) / (maxTemp - minTemp)).coerceIn(0.0, 1.0)
                         } else {
-                            highTempPath.lineTo(x, y)
+                            0.5
                         }
+                        val y = height - padding - (normalizedTemp.toFloat() * (height - 2 * padding))
+                        Offset(x, y)
                     }
 
+                    curvePath.moveTo(curvePoints[0].x, curvePoints[0].y)
+                    fillPath.moveTo(curvePoints[0].x, height)
+                    fillPath.lineTo(curvePoints[0].x, curvePoints[0].y)
+
+                    for (i in 1 until curvePoints.size) {
+                        val prev = curvePoints[i - 1]
+                        val current = curvePoints[i]
+
+                        val controlX = (prev.x + current.x) / 2f
+                        val controlY = (prev.y + current.y) / 2f
+
+                        curvePath.quadraticBezierTo(
+                            prev.x, prev.y,
+                            controlX, controlY
+                        )
+                        fillPath.quadraticBezierTo(
+                            prev.x, prev.y,
+                            controlX, controlY
+                        )
+                    }
+
+                    val lastPoint = curvePoints.last()
+                    curvePath.lineTo(lastPoint.x, lastPoint.y)
+                    fillPath.lineTo(lastPoint.x, lastPoint.y)
+
+                    fillPath.lineTo(lastPoint.x, height)
+                    fillPath.close()
+
                     drawPath(
-                        path = highTempPath,
+                        path = fillPath,
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF4A9FE8).copy(alpha = 0.4f),
+                                Color(0xFF4A9FE8).copy(alpha = 0.05f)
+                            )
+                        )
+                    )
+
+                    drawPath(
+                        path = curvePath,
                         color = Color(0xFF4A9FE8),
-                        style = Stroke(width = 4.dp.toPx())
+                        style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
                     )
 
-                    // Low temperature line (bottom dashed line - gray)
-                    val lowTempPath = Path()
-                    points.forEachIndexed { index, hourly ->
-                        val x = index * spacing
-                        val normalizedTemp = ((hourly.temp ?: 0.0) - minTemp) / (maxTemp - minTemp)
-                        val y = height * 0.7f - (normalizedTemp.toFloat() * height * 0.2f)
-
-                        if (index == 0) {
-                            lowTempPath.moveTo(x, y)
-                        } else {
-                            lowTempPath.lineTo(x, y)
-                        }
-                    }
-
-                    drawPath(
-                        path = lowTempPath,
-                        color = Color.Gray.copy(alpha = 0.5f),
-                        style = Stroke(width = 3.dp.toPx())
-                    )
-
-                    // Draw point marker at middle (12:00 PM typically)
-                    val midIndex = 2
-                    if (midIndex < points.size) {
-                        val x = midIndex * spacing
-                        val normalizedTemp = ((points[midIndex].temp ?: 0.0) - minTemp) / (maxTemp - minTemp)
-                        val y = height * 0.3f - (normalizedTemp.toFloat() * height * 0.2f)
-
+                    curvePoints.forEachIndexed { index, point ->
                         drawCircle(
                             color = Color.White,
-                            radius = 8.dp.toPx(),
-                            center = Offset(x, y)
+                            radius = 6.dp.toPx(),
+                            center = point
                         )
-
                         drawCircle(
                             color = Color(0xFF4A9FE8),
-                            radius = 5.dp.toPx(),
-                            center = Offset(x, y)
+                            radius = 3.dp.toPx(),
+                            center = point
                         )
                     }
                 }
 
-                // Temperature label at 12:00 PM
-                if (hourlyData.size > 2) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .offset(y = (-10).dp)
-                            .background(
-                                Color(0xFF3BA4E8),
-                                RoundedCornerShape(12.dp)
+                if (hourlyData.isNotEmpty()) {
+                    val maxTempIndex = hourlyData.take(8).indexOfFirst { it.temp == maxTemp }
+                    if (maxTempIndex >= 0) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .offset(
+                                    x = ((maxTempIndex.toFloat() / 7.coerceAtLeast(1)) * 100 - 50).dp,
+                                    y = 5.dp
+                                )
+                                .background(
+                                    Color(0xFF3BA4E8),
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "${maxTemp.toInt()}°",
+                                fontSize = 13.sp,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
                             )
-                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "${hourlyData[2].temp?.toInt()}/${maxTemp.toInt()}°",
-                            fontSize = 12.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
+                        }
                     }
                 }
             }
@@ -173,21 +192,21 @@ fun HourlyForecastCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                hourlyData.take(5).forEach { hourly ->
+                hourlyData.take(8).forEach { hourly ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(60.dp)
+                        modifier = Modifier.weight(1f)
                     ) {
                         // Time
-                        val timeFormat = SimpleDateFormat("hh:00 a", Locale.getDefault())
+                        val timeFormat = SimpleDateFormat("ha", Locale.getDefault())
                         val time = Date((hourly.dt ?: 0) * 1000L)
                         Text(
                             text = timeFormat.format(time),
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             color = Color.White.copy(alpha = 0.7f)
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         // Weather icon
                         Icon(
@@ -197,7 +216,7 @@ fun HourlyForecastCard(
                                 )
                             ),
                             contentDescription = null,
-                            modifier = Modifier.size(32.dp),
+                            modifier = Modifier.size(28.dp),
                             tint = Color.Unspecified
                         )
                     }
