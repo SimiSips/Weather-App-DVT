@@ -284,7 +284,9 @@ This app uses the **OpenWeatherMap One Call API 3.0**, which requires a paid sub
 - Network security policy compliant
 
 ## Screenshots
-
+![error.png](screenshots/error.png) ![forcast detail screen.png](screenshots/forcast%20detail%20screen.png)
+![home screen.png](screenshots/home%20screen.png) ![permission request.png](screenshots/permission%20request.png)
+![search dialog.png](screenshots/search%20dialog.png) ![search dialog 2.png](screenshots/search%20dialog%202.png)
 ### Main Weather Screen
 - Custom header with search and current location icons
 - Large centered weather icon display
