@@ -21,34 +21,43 @@ class WeatherViewModel @Inject constructor(
 
     private var lastLat: Double = -26.2041
     private var lastLon: Double = 28.0473
+    private var lastCityName: String = "Johannesburg, South Africa"
 
     init {
         // Default location - Johannesburg
-        getWeather(lastLat, lastLon)
+        getWeather(lastLat, lastLon, lastCityName)
     }
 
-    fun getWeather(lat: Double, lon: Double) {
+    fun getWeather(lat: Double, lon: Double, cityName: String = "Unknown Location") {
         lastLat = lat
         lastLon = lon
+        lastCityName = cityName
 
         repository.getWeatherData(lat, lon).onEach { result ->
             when (result) {
                 is Resource.Success -> {
-                    _state.value = WeatherState(weather = result.data)
+                    _state.value = WeatherState(
+                        weather = result.data,
+                        cityName = cityName
+                    )
                 }
                 is Resource.Error -> {
                     _state.value = WeatherState(
-                        error = result.message ?: "An unexpected error occurred"
+                        error = result.message ?: "An unexpected error occurred",
+                        cityName = cityName
                     )
                 }
                 is Resource.Loading -> {
-                    _state.value = WeatherState(isLoading = true)
+                    _state.value = WeatherState(
+                        isLoading = true,
+                        cityName = cityName
+                    )
                 }
             }
         }.launchIn(viewModelScope)
     }
 
     fun retry() {
-        getWeather(lastLat, lastLon)
+        getWeather(lastLat, lastLon, lastCityName)
     }
 }

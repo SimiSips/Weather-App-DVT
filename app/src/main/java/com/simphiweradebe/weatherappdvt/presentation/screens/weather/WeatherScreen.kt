@@ -34,6 +34,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun WeatherScreen(
+    onNavigateToForecast: () -> Unit = {},
     viewModel: WeatherViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -43,7 +44,7 @@ fun WeatherScreen(
         com.simphiweradebe.weatherappdvt.presentation.screens.search.SearchDialog(
             onDismiss = { showSearchDialog = false },
             onLocationSelected = { lat, lon, cityName ->
-                viewModel.getWeather(lat, lon)
+                viewModel.getWeather(lat, lon, cityName)
             }
         )
     }
@@ -133,7 +134,7 @@ fun WeatherScreen(
                             }
 
                             Text(
-                                text = "Cuaca",
+                                text = state.cityName,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color.White
@@ -212,7 +213,7 @@ fun WeatherScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
-                                    text = "Johannesburg, South Africa",
+                                    text = state.cityName,
                                     fontSize = 16.sp,
                                     color = Color.White.copy(alpha = 0.9f)
                                 )
@@ -343,11 +344,13 @@ fun WeatherScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White
                                 )
-                                Text(
-                                    text = "Next 7 Days  >",
-                                    fontSize = 16.sp,
-                                    color = Color.White.copy(alpha = 0.8f)
-                                )
+                                TextButton(onClick = onNavigateToForecast) {
+                                    Text(
+                                        text = "Next 7 Days  >",
+                                        fontSize = 16.sp,
+                                        color = Color.White.copy(alpha = 0.8f)
+                                    )
+                                }
                             }
 
                             Surface(

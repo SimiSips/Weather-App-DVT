@@ -63,6 +63,9 @@ dependencies {
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
+
     // Retrofit & Networking
     implementation(libs.retrofit)
     implementation(libs.retrofit.serialization)
