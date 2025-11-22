@@ -19,7 +19,7 @@ interface WeatherApi {
 
     @GET
     suspend fun searchLocation(
-        @Url url: String = "http://api.openweathermap.org/geo/1.0/direct",
+        @Url url: String = "https://api.openweathermap.org/geo/1.0/direct",
         @Query("q") query: String,
         @Query("limit") limit: Int = 5,
         @Query("appid") apiKey: String
