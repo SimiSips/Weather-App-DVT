@@ -1,5 +1,6 @@
 package com.simphiweradebe.weatherappdvt.presentation.screens.forecast
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.simphiweradebe.weatherappdvt.presentation.screens.forecast.components.*
 import com.simphiweradebe.weatherappdvt.presentation.screens.weather.WeatherViewModel
+import com.simphiweradebe.weatherappdvt.utils.WeatherBackgroundMapper
 import com.simphiweradebe.weatherappdvt.utils.WeatherIconMapper
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,18 +38,28 @@ fun ForecastDetailScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    // Get dynamic background based on current weather
+    val backgroundRes = state.weather?.current?.weather?.firstOrNull()?.main?.let { condition ->
+        WeatherBackgroundMapper.getWeatherBackground(condition)
+    } ?: WeatherBackgroundMapper.getWeatherBackground("clear")
+
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF5B9FD8),
-                        Color(0xFF2E5B7A)
-                    )
-                )
-            )
+        modifier = Modifier.fillMaxSize()
     ) {
+        // Background image
+        Image(
+            painter = painterResource(id = backgroundRes),
+            contentDescription = "Weather background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        // Dark overlay for better text visibility
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.3f))
+        )
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
