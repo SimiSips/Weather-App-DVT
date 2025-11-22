@@ -5,6 +5,7 @@ import com.simphiweradebe.weatherappdvt.data.models.*
 import com.simphiweradebe.weatherappdvt.data.remote.WeatherApi
 import com.simphiweradebe.weatherappdvt.utils.Resource
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -59,9 +60,8 @@ class WeatherRepositoryImplTest {
 
     @Test
     fun `getWeatherData should emit error on HttpException`() = runTest {
-        val httpException = mockk<HttpException>()
-        coEvery { httpException.code() } returns 404
-        coEvery { httpException.message() } returns "Not Found"
+        val httpException = mockk<HttpException>(relaxed = true)
+        every { httpException.localizedMessage } returns "Not Found"
         coEvery { api.getWeatherData(any(), any(), any(), any(), any()) } throws httpException
 
         repository.getWeatherData(10.0, 20.0).test {
